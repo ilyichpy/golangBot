@@ -2,6 +2,8 @@ package main
 
 import (
 	"github.com/joho/godotenv"
+	"golangBot/internal/app/commands"
+	"golangBot/internal/services/product"
 	"log"
 	"os"
 
@@ -24,28 +26,19 @@ func main() {
 	u.Timeout = 60
 
 	updates := bot.GetUpdatesChan(u)
+	service := product.NewService()
+	commander := commands.NewCommander(bot, service)
 
 	for update := range updates {
 		if update.Message != nil {
 			switch update.Message.Command() {
 			case "help":
-				helpCommand(bot, &update)
+				commander.Help(&update)
+			case "list":
+				commander.List(&update)
 			default:
-				defaultTextInput(bot, &update)
+				commander.Default(&update)
 			}
-
 		}
 	}
-}
-
-func helpCommand(bot *tgbotapi.BotAPI, inputMessage *tgbotapi.Update) {
-	log.Printf("[%s] %s", inputMessage.Message.From.UserName, inputMessage.Message.Text)
-	msg := tgbotapi.NewMessage(inputMessage.Message.Chat.ID, "/help command return all commands")
-	bot.Send(msg)
-}
-
-func defaultTextInput(bot *tgbotapi.BotAPI, inputMessage *tgbotapi.Update) {
-	log.Printf("[%s] %s", inputMessage.Message.From.UserName, inputMessage.Message.Text)
-	msg := tgbotapi.NewMessage(inputMessage.Message.Chat.ID, inputMessage.Message.Text)
-	bot.Send(msg)
 }
